@@ -68,7 +68,7 @@ Each agent is a single ROS 2 node that owns four concerns:
 ```
 decentralized-multi-robot-fleet/
 ├── fleet_agent/        # Per-robot agent: liveness, auction, reservations, recovery
-├── fleet_msgs/         # Custom messages: Heartbeat, Task, Bid, Claim, Reservation
+├── fleet_msgs/         # Custom messages: Heartbeat, Task, Bid, Claim, Reservation, TaskStatus
 ├── fleet_navigation/   # Nav2 and localization configuration, maps, lane graphs
 ├── fleet_simulation/   # Gazebo worlds, robot models, multi-robot spawning
 ├── fleet_bringup/      # Launch files for N robots and scenarios
