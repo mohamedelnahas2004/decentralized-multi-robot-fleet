@@ -142,11 +142,6 @@ The framework is evaluated against simple baselines to quantify the benefit of d
 
 Results will be published in `docs/evaluation.md` as experiments are completed.
 
-## Author
-
-**Mohamed Abdel Aal**, Mechatronics and Robotics Engineering, Assiut University.
-
-Design, implementation, simulation and evaluation are all done by the author.
 
 ## License
 
