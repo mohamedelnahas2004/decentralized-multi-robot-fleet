@@ -2,7 +2,7 @@
 
 A decentralized fleet-coordination framework for autonomous mobile robots, built on ROS 2 and Nav2. Every robot runs its own agent. Agents discover each other, allocate tasks through auctions, reserve shared paths, and recover from failures without a central server.
 
-> **Status: Early development.** The architecture and protocols below describe the target design. Implementation is in progress, and the [Roadmap](#roadmap) shows exactly what is done and what is planned. Interfaces may change without notice.
+> **Status: Early development.** The architecture and protocols below describe the target design. Implementation is in progress and interfaces may change without notice.
 
 ![Status](https://img.shields.io/badge/status-early_development-orange)
 ![ROS 2 Jazzy](https://img.shields.io/badge/ROS_2-Jazzy-22314E)
@@ -100,11 +100,11 @@ sudo apt install -y \
 
 ### Build
 
-> Note: the packages and launch files referenced below are being implemented progressively. Commands may not work until the corresponding roadmap item is checked.
+> Note: the packages and launch files referenced below are being implemented progressively. Commands may not work until the corresponding component is implemented.
 
 ```bash
 mkdir -p ~/fleet_ws/src && cd ~/fleet_ws/src
-git clone https://github.com/<your-username>/decentralized-multi-robot-fleet.git
+git clone https://github.com/mohamedelnahas2004/decentralized-multi-robot-fleet.git
 cd ~/fleet_ws
 rosdep install --from-paths src --ignore-src -r -y
 colcon build --symlink-install
@@ -141,27 +141,6 @@ The framework is evaluated against simple baselines to quantify the benefit of d
 | Allocation strategy | Auction vs. round-robin vs. random assignment |
 
 Results will be published in `docs/evaluation.md` as experiments are completed.
-
-## Roadmap
-
-Current phase: **planning and single-robot baseline.** Checked items are complete; everything else is planned.
-
-- [ ] Single-robot baseline: Nav2 with SLAM and AMCL
-- [ ] Multi-robot simulation with isolated namespaces and TF prefixes
-- [ ] Agent node: heartbeat and neighbor table
-- [ ] Task auction and mission generator
-- [ ] Lane graph and reservation protocol
-- [ ] Deadlock detection and resolution
-- [ ] Fault injection and task recovery
-- [ ] Charging behavior
-- [ ] Benchmark suite and evaluation report
-- [ ] Hardware deployment on differential-drive robots
-
-## Contributing
-
-This is a solo project developed and maintained by a single author. It is **not currently accepting code contributions or pull requests**; unsolicited pull requests may be closed without review.
-
-Bug reports, questions and design feedback are welcome through [GitHub Issues](../../issues).
 
 ## Author
 
