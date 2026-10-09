@@ -159,20 +159,15 @@ Current phase: **planning and single-robot baseline.** Checked items are complet
 
 ## Contributing
 
-1. Create a branch named `<author>/<topic>`.
-2. Make focused commits with clear messages.
-3. Open a pull request and request a review.
-4. Merge after approval using squash-merge.
+This is a solo project developed and maintained by a single author. It is **not currently accepting code contributions or pull requests**; unsolicited pull requests may be closed without review.
 
-Please include tests or a reproducible scenario with any behavioral change.
+Bug reports, questions and design feedback are welcome through [GitHub Issues](../../issues).
 
-## Team
+## Author
 
-| Name | Area |
-|---|---|
-| _Name_ | Localization and mapping |
-| _Name_ | Fleet coordination |
-| _Name_ | Simulation and infrastructure |
+**Mohamed Abdel Aal**, Mechatronics and Robotics Engineering, Assiut University.
+
+Design, implementation, simulation and evaluation are all done by the author.
 
 ## License
 
