@@ -1,0 +1,236 @@
+<?xml version="1.0"?>
+<!-- Gazebo Harmonic (gz-sim) plugins, sensors, materials and friction.
+     Everything is namespaced by ${robot_name}: gz topics are /<robot_name>/...
+     and every frame id is "<robot_name>/<link>". -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===== Sensor settings ===== -->
+  <xacro:property name="lidar_rate"        value="10"/>
+  <xacro:property name="lidar_samples"     value="720"/>
+  <xacro:property name="lidar_min_range"   value="0.15"/>
+  <xacro:property name="lidar_max_range"   value="12.0"/>
+  <xacro:property name="lidar_noise_std"   value="0.01"/>
+
+  <xacro:property name="zed_width_px"      value="1280"/>
+  <xacro:property name="zed_height_px"     value="720"/>
+  <xacro:property name="zed_rate"          value="15"/>
+  <xacro:property name="zed_hfov"          value="${radians(110.0)}"/>
+  <xacro:property name="zed_min_range"     value="0.3"/>
+  <xacro:property name="zed_max_range"     value="20.0"/>
+  <xacro:property name="zed_noise_std"     value="0.007"/>
+
+  <xacro:property name="imu_rate"          value="100"/>
+
+  <!-- ===== Diff-drive limits ===== -->
+  <xacro:property name="max_lin_vel"       value="1.0"/>
+  <xacro:property name="max_ang_vel"       value="2.0"/>
+  <xacro:property name="max_lin_acc"       value="1.0"/>
+  <xacro:property name="max_ang_acc"       value="2.0"/>
+
+  <!-- Keep this fixed joint as a real joint in SDF (separate link, own material). -->
+  <xacro:macro name="gz_keep_joint" params="joint">
+    <gazebo reference="${joint}">
+      <preserveFixedJoint>true</preserveFixedJoint>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="gz_friction" params="link mu">
+    <gazebo reference="${link}">
+      <mu1>${mu}</mu1>
+      <mu2>${mu}</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="gz_sim_extensions">
+
+    <!-- ===== Materials (same palette as RViz) ===== -->
+    <xacro:gz_material link="base_link"          rgba="${chassis_body_rgba}"  specular="0.3 0.3 0.3 1.0"/>
+    <xacro:gz_material link="top_panel_link"     rgba="${chassis_panel_rgba}" specular="0.4 0.4 0.4 1.0"/>
+    <xacro:gz_material link="accent_stripe_link" rgba="${accent_rgba}"        specular="0.3 0.3 0.3 1.0"/>
+    <xacro:gz_material link="mast_link"          rgba="${accent_rgba}"        specular="0.3 0.3 0.3 1.0"/>
+    <xacro:gz_material link="left_wheel_link"    rgba="${wheel_rgba}"         specular="0.05 0.05 0.05 1.0"/>
+    <xacro:gz_material link="right_wheel_link"   rgba="${wheel_rgba}"         specular="0.05 0.05 0.05 1.0"/>
+    <xacro:gz_material link="caster_front_link"  rgba="${caster_rgba}"        specular="0.8 0.8 0.8 1.0"/>
+    <xacro:gz_material link="caster_rear_link"   rgba="${caster_rgba}"        specular="0.8 0.8 0.8 1.0"/>
+    <xacro:gz_material link="lidar_link"         rgba="${lidar_rgba}"         specular="0.5 0.5 0.5 1.0"/>
+    <xacro:gz_material link="${zed_name}_camera_link" rgba="${zed_rgba}"      specular="0.2 0.2 0.2 1.0"/>
+
+    <!-- ===== Keep colored parts as separate SDF links ===== -->
+    <xacro:gz_keep_joint joint="top_panel_joint"/>
+    <xacro:gz_keep_joint joint="accent_stripe_joint"/>
+    <xacro:gz_keep_joint joint="mast_joint"/>
+    <xacro:gz_keep_joint joint="lidar_joint"/>
+    <xacro:gz_keep_joint joint="caster_front_joint"/>
+    <xacro:gz_keep_joint joint="caster_rear_joint"/>
+    <xacro:gz_keep_joint joint="${zed_name}_camera_joint"/>
+
+    <!-- ===== Friction: grippy wheels, frictionless casters ===== -->
+    <xacro:gz_friction link="left_wheel_link"   mu="1.0"/>
+    <xacro:gz_friction link="right_wheel_link"  mu="1.0"/>
+    <xacro:gz_friction link="caster_front_link" mu="0.0"/>
+    <xacro:gz_friction link="caster_rear_link"  mu="0.0"/>
+
+    <!-- ===== Model plugins ===== -->
+    <gazebo>
+      <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
+        <left_joint>left_wheel_joint</left_joint>
+        <right_joint>right_wheel_joint</right_joint>
+        <wheel_separation>${wheel_separation}</wheel_separation>
+        <wheel_radius>${wheel_radius}</wheel_radius>
+        <odom_publish_frequency>50</odom_publish_frequency>
+        <max_linear_velocity>${max_lin_vel}</max_linear_velocity>
+        <min_linear_velocity>${-max_lin_vel}</min_linear_velocity>
+        <max_angular_velocity>${max_ang_vel}</max_angular_velocity>
+        <min_angular_velocity>${-max_ang_vel}</min_angular_velocity>
+        <max_linear_acceleration>${max_lin_acc}</max_linear_acceleration>
+        <min_linear_acceleration>${-max_lin_acc}</min_linear_acceleration>
+        <max_angular_acceleration>${max_ang_acc}</max_angular_acceleration>
+        <min_angular_acceleration>${-max_ang_acc}</min_angular_acceleration>
+        <topic>/${robot_name}/cmd_vel</topic>
+        <odom_topic>/${robot_name}/odom</odom_topic>
+        <tf_topic>/${robot_name}/tf</tf_topic>
+        <frame_id>${robot_name}/odom</frame_id>
+        <child_frame_id>${robot_name}/base_footprint</child_frame_id>
+      </plugin>
+
+      <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+        <topic>/${robot_name}/joint_states</topic>
+        <joint_name>left_wheel_joint</joint_name>
+        <joint_name>right_wheel_joint</joint_name>
+      </plugin>
+    </gazebo>
+
+    <!-- ===== 2D lidar (gpu_lidar), scan plane = lidar_link origin ===== -->
+    <gazebo reference="lidar_link">
+      <sensor name="lidar" type="gpu_lidar">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>/${robot_name}/scan</topic>
+        <gz_frame_id>${robot_name}/lidar_link</gz_frame_id>
+        <update_rate>${lidar_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>${lidar_samples}</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.141593</min_angle>
+              <max_angle>3.141593</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>${lidar_min_range}</min>
+            <max>${lidar_max_range}</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>${lidar_noise_std}</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+
+    <!-- ===== IMU on base_link ===== -->
+    <gazebo reference="base_link">
+      <sensor name="imu" type="imu">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>/${robot_name}/imu</topic>
+        <gz_frame_id>${robot_name}/base_link</gz_frame_id>
+        <update_rate>${imu_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <imu>
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></x>
+            <y><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></y>
+            <z><noise type="gaussian"><mean>0.0</mean><stddev>0.0002</stddev><bias_mean>0.0000075</bias_mean><bias_stddev>0.0000008</bias_stddev></noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0.0</mean><stddev>0.017</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></x>
+            <y><noise type="gaussian"><mean>0.0</mean><stddev>0.017</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></y>
+            <z><noise type="gaussian"><mean>0.0</mean><stddev>0.017</stddev><bias_mean>0.1</bias_mean><bias_stddev>0.001</bias_stddev></noise></z>
+          </linear_acceleration>
+        </imu>
+      </sensor>
+    </gazebo>
+
+    <!-- ===== ZED left camera ===== -->
+    <gazebo reference="${zed_name}_left_camera_frame">
+      <sensor name="${zed_name}_left" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>/${robot_name}/zed/left/image_raw</topic>
+        <gz_frame_id>${robot_name}/${zed_name}_left_camera_optical_frame</gz_frame_id>
+        <update_rate>${zed_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <camera>
+          <horizontal_fov>${zed_hfov}</horizontal_fov>
+          <image>
+            <width>${zed_width_px}</width>
+            <height>${zed_height_px}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip><near>${zed_min_range}</near><far>${zed_max_range}</far></clip>
+          <noise><type>gaussian</type><mean>0.0</mean><stddev>${zed_noise_std}</stddev></noise>
+          <optical_frame_id>${robot_name}/${zed_name}_left_camera_optical_frame</optical_frame_id>
+          <camera_info_topic>/${robot_name}/zed/left/camera_info</camera_info_topic>
+        </camera>
+      </sensor>
+    </gazebo>
+
+    <!-- ===== ZED right camera ===== -->
+    <gazebo reference="${zed_name}_right_camera_frame">
+      <sensor name="${zed_name}_right" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>/${robot_name}/zed/right/image_raw</topic>
+        <gz_frame_id>${robot_name}/${zed_name}_right_camera_optical_frame</gz_frame_id>
+        <update_rate>${zed_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <camera>
+          <horizontal_fov>${zed_hfov}</horizontal_fov>
+          <image>
+            <width>${zed_width_px}</width>
+            <height>${zed_height_px}</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip><near>${zed_min_range}</near><far>${zed_max_range}</far></clip>
+          <noise><type>gaussian</type><mean>0.0</mean><stddev>${zed_noise_std}</stddev></noise>
+          <optical_frame_id>${robot_name}/${zed_name}_right_camera_optical_frame</optical_frame_id>
+          <camera_info_topic>/${robot_name}/zed/right/camera_info</camera_info_topic>
+        </camera>
+      </sensor>
+    </gazebo>
+
+    <!-- ===== ZED center RGB-D (depth + point cloud) =====
+         gz publishes <topic>/image, /depth_image, /points, /camera_info.
+         Points use the x-forward convention, so the frame is the (non-optical)
+         camera center frame. -->
+    <gazebo reference="${zed_center_frame}">
+      <sensor name="${zed_name}_rgbd" type="rgbd_camera">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>/${robot_name}/zed/rgbd</topic>
+        <gz_frame_id>${robot_name}/${zed_center_frame}</gz_frame_id>
+        <update_rate>${zed_rate}</update_rate>
+        <always_on>true</always_on>
+        <visualize>false</visualize>
+        <camera>
+          <horizontal_fov>${zed_hfov}</horizontal_fov>
+          <image>
+            <width>${zed_width_px}</width>
+            <height>${zed_height_px}</height>
+          </image>
+          <clip><near>${zed_min_range}</near><far>${zed_max_range}</far></clip>
+          <depth_camera>
+            <clip><near>${zed_min_range}</near><far>${zed_max_range}</far></clip>
+          </depth_camera>
+          <noise><type>gaussian</type><mean>0.0</mean><stddev>${zed_noise_std}</stddev></noise>
+        </camera>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

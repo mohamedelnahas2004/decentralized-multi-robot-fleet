@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<!--
+  Differential-drive warehouse AMR - main entry point.
+
+  xacro args:
+    robot_name              namespace / frame prefix (robot_1, robot_2, ...)
+    accent_color            "r g b a" accent color, different per robot
+    use_sim                 true: add Gazebo plugins/sensors, file:// mesh paths
+    use_zed_wrapper_frames  true: ZED frames follow the official zed-ros2-wrapper
+                            layout (camera_link at the camera base + camera_center)
+
+  Frame convention: link names in this URDF are un-prefixed (base_link, ...).
+  The "<robot_name>/" prefix is added by robot_state_publisher (frame_prefix) and
+  is written explicitly into every Gazebo frame id / topic, so the published TF
+  tree is robot_1/odom -> robot_1/base_footprint -> robot_1/base_link -> ...
+-->
+<robot name="amr" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:arg name="robot_name" default="robot_1"/>
+  <xacro:arg name="accent_color" default="0.0 0.70 0.75 1.0"/>
+  <xacro:arg name="use_sim" default="true"/>
+  <xacro:arg name="use_zed_wrapper_frames" default="false"/>
+
+  <xacro:property name="robot_name" value="$(arg robot_name)"/>
+
+  <!-- ====================== TUNABLE PROPERTIES ====================== -->
+
+  <!-- Chassis [m, kg] -->
+  <xacro:property name="chassis_length"    value="0.50"/>
+  <xacro:property name="chassis_width"     value="0.35"/>
+  <xacro:property name="chassis_height"    value="0.15"/>
+  <xacro:property name="chassis_mass"      value="12.0"/>
+  <xacro:property name="ground_clearance"  value="0.04"/>   <!-- chassis underside to floor -->
+  <xacro:property name="panel_thickness"   value="0.004"/>  <!-- light-gray top panel -->
+  <xacro:property name="panel_inset"       value="0.02"/>   <!-- panel is smaller than chassis by 2x this -->
+  <xacro:property name="panel_mass"        value="0.4"/>
+  <xacro:property name="stripe_height"     value="0.02"/>   <!-- accent band around the chassis -->
+  <xacro:property name="stripe_drop"       value="0.03"/>   <!-- band distance below chassis top -->
+  <xacro:property name="stripe_mass"       value="0.1"/>
+
+  <!-- Drive wheels -->
+  <xacro:property name="wheel_radius"      value="0.075"/>
+  <xacro:property name="wheel_width"       value="0.04"/>
+  <xacro:property name="wheel_separation"  value="0.40"/>   <!-- center-to-center -->
+  <xacro:property name="wheel_mass"        value="1.2"/>
+
+  <!-- Passive casters (front and rear, frictionless spheres) -->
+  <xacro:property name="caster_radius"     value="0.04"/>   <!-- keep equal to ground_clearance -->
+  <xacro:property name="caster_x"          value="0.20"/>   <!-- +/- from base_link -->
+  <xacro:property name="caster_mass"       value="0.3"/>
+
+  <!-- Lidar (position in base_link, measured from the top of the light-gray panel) -->
+  <xacro:property name="lidar_x"                 value="0.0"/>
+  <xacro:property name="lidar_y"                 value="0.0"/>
+  <xacro:property name="lidar_height_above_mount" value="0.0"/>   <!-- lift of mesh bottom above panel -->
+  <xacro:property name="lidar_scan_height"       value="0.0207"/> <!-- scan plane above mesh bottom [PLACEHOLDER: check datasheet] -->
+  <xacro:property name="lidar_mass"              value="0.19"/>
+  <xacro:property name="lidar_collision_radius"  value="0.038"/>
+  <xacro:property name="lidar_collision_height"  value="0.041"/>
+
+  <!-- ZED camera (center of the camera body) -->
+  <xacro:property name="zed_name"                value="zed"/>
+  <xacro:property name="zed_x"                   value="0.20"/>  <!-- in base_link -->
+  <xacro:property name="zed_y"                   value="0.0"/>
+  <xacro:property name="zed_height_above_chassis" value="0.20"/> <!-- camera center above top panel -->
+  <xacro:property name="zed_baseline"            value="0.12"/>
+  <xacro:property name="zed_mass"                value="0.124"/>
+  <xacro:property name="zed_size_x"              value="0.032"/> <!-- collision box -->
+  <xacro:property name="zed_size_y"              value="0.175"/>
+  <xacro:property name="zed_size_z"              value="0.030"/>
+  <xacro:property name="zed_mesh_yaw"            value="0.0"/>   <!-- set to ${pi} if the mesh faces backwards -->
+  <xacro:property name="mast_size"               value="0.03"/>  <!-- square mast carrying the camera -->
+  <xacro:property name="mast_mass"               value="0.3"/>
+
+  <!-- ====================== DERIVED VALUES ====================== -->
+  <!-- base_link sits on the wheel axle; base_footprint is on the floor below it. -->
+  <xacro:property name="chassis_z"     value="${ground_clearance + chassis_height / 2.0 - wheel_radius}"/>
+  <xacro:property name="chassis_top_z" value="${chassis_z + chassis_height / 2.0 + panel_thickness}"/>
+  <xacro:property name="lidar_z"       value="${chassis_top_z + lidar_height_above_mount + lidar_scan_height}"/>
+  <xacro:property name="zed_z"         value="${chassis_top_z + zed_height_above_chassis}"/>
+  <xacro:property name="mast_length"   value="${zed_height_above_chassis - zed_size_z / 2.0}"/>
+
+  <!-- Mesh path: absolute file:// for Gazebo, package:// for RViz/URDF-only use. -->
+  <xacro:if value="$(arg use_sim)">
+    <xacro:property name="mesh_prefix" value="file://$(find fleet_description)/meshes/"/>
+  </xacro:if>
+  <xacro:unless value="$(arg use_sim)">
+    <xacro:property name="mesh_prefix" value="package://fleet_description/meshes/"/>
+  </xacro:unless>
+
+  <!-- Frame the center RGB-D sensor is attached to. -->
+  <xacro:if value="$(arg use_zed_wrapper_frames)">
+    <xacro:property name="zed_center_frame" value="${zed_name}_camera_center"/>
+  </xacro:if>
+  <xacro:unless value="$(arg use_zed_wrapper_frames)">
+    <xacro:property name="zed_center_frame" value="${zed_name}_camera_link"/>
+  </xacro:unless>
+
+  <!-- ====================== INCLUDES ====================== -->
+  <xacro:include filename="inertial.xacro"/>
+  <xacro:include filename="materials.xacro"/>
+  <xacro:include filename="amr_body.xacro"/>
+  <xacro:include filename="lidar.xacro"/>
+  <xacro:include filename="zed_camera.xacro"/>
+  <xacro:include filename="gazebo.xacro"/>
+
+  <!-- ====================== ROBOT ====================== -->
+  <xacro:amr_body/>
+
+  <xacro:lidar parent="base_link" x="${lidar_x}" y="${lidar_y}" z="${lidar_z}"/>
+
+  <xacro:zed_camera parent="base_link" name="${zed_name}"
+                    wrapper_frames="$(arg use_zed_wrapper_frames)"
+                    x="${zed_x}" y="${zed_y}" z="${zed_z}"/>
+
+  <xacro:if value="$(arg use_sim)">
+    <xacro:gz_sim_extensions/>
+  </xacro:if>
+
+</robot>

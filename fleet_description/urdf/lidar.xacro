@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<!-- Round rotating lidar built from lidar.stl.
+     lidar_link sits on the rotation axis at the SCAN-PLANE height.
+     The mesh origin is not at its center, so the visual offset is computed from
+     the measured bounding box (verify with scripts/inspect_mesh.py). -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Measured bounding box of lidar.stl [m] -->
+  <xacro:property name="lidar_bbox_min_x" value="-0.06456"/>
+  <xacro:property name="lidar_bbox_max_x" value="0.01107"/>
+  <xacro:property name="lidar_bbox_min_y" value="-0.03702"/>
+  <xacro:property name="lidar_bbox_max_y" value="0.03866"/>
+  <xacro:property name="lidar_bbox_min_z" value="-0.03130"/>
+
+  <!-- Visual offset: mesh XY center -> link axis, mesh bottom -> (scan plane - lidar_scan_height).
+       With lidar_scan_height = 0 this gives the xyz = "0.0267 -0.0008 0.0313" offset. -->
+  <xacro:property name="lidar_visual_x" value="${-(lidar_bbox_min_x + lidar_bbox_max_x) / 2.0}"/>
+  <xacro:property name="lidar_visual_y" value="${-(lidar_bbox_min_y + lidar_bbox_max_y) / 2.0}"/>
+  <xacro:property name="lidar_visual_z" value="${-lidar_bbox_min_z - lidar_scan_height}"/>
+
+  <xacro:macro name="lidar" params="parent name:=lidar_link x:=0.0 y:=0.0 z:=0.0">
+    <link name="${name}">
+      <visual>
+        <origin xyz="${lidar_visual_x} ${lidar_visual_y} ${lidar_visual_z}" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="${mesh_prefix}lidar.stl" scale="1 1 1"/>
+        </geometry>
+        <material name="lidar"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-lidar_scan_height + lidar_collision_height / 2.0}" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="${lidar_collision_radius}" length="${lidar_collision_height}"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial m="${lidar_mass}" r="${lidar_collision_radius}" h="${lidar_collision_height}">
+        <origin xyz="0 0 ${-lidar_scan_height + lidar_collision_height / 2.0}" rpy="0 0 0"/>
+      </xacro:cylinder_inertial>
+    </link>
+    <joint name="lidar_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}"/>
+      <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

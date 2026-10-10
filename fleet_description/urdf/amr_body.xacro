@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<!-- Chassis, top panel, accent band, camera mast, drive wheels and casters.
+     base_footprint (floor) -> base_link (wheel-axle height, REP-105). -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="wheel" params="side y_sign">
+    <link name="${side}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi / 2.0} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="wheel"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi / 2.0} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <xacro:cylinder_inertial m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}">
+        <origin xyz="0 0 0" rpy="${pi / 2.0} 0 0"/>
+      </xacro:cylinder_inertial>
+    </link>
+    <joint name="${side}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${side}_wheel_link"/>
+      <origin xyz="0 ${y_sign * wheel_separation / 2.0} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.01" friction="0.0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="caster" params="name x">
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+        <material name="caster"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><sphere radius="${caster_radius}"/></geometry>
+      </collision>
+      <xacro:sphere_inertial m="${caster_mass}" r="${caster_radius}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:sphere_inertial>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <!-- ball center is caster_radius above the floor -->
+      <origin xyz="${x} 0 ${caster_radius - wheel_radius}" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="amr_body">
+
+    <link name="base_footprint"/>
+    <joint name="base_footprint_joint" type="fixed">
+      <parent link="base_footprint"/>
+      <child link="base_link"/>
+      <origin xyz="0 0 ${wheel_radius}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Chassis (graphite) -->
+    <link name="base_link">
+      <visual>
+        <origin xyz="0 0 ${chassis_z}" rpy="0 0 0"/>
+        <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+        <material name="chassis_body"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${chassis_z}" rpy="0 0 0"/>
+        <geometry><box size="${chassis_length} ${chassis_width} ${chassis_height}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${chassis_mass}" x="${chassis_length}" y="${chassis_width}" z="${chassis_height}">
+        <origin xyz="0 0 ${chassis_z}" rpy="0 0 0"/>
+      </xacro:box_inertial>
+    </link>
+
+    <!-- Top panel (light gray) -->
+    <link name="top_panel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${chassis_length - 2.0 * panel_inset} ${chassis_width - 2.0 * panel_inset} ${panel_thickness}"/>
+        </geometry>
+        <material name="chassis_panel"/>
+      </visual>
+      <xacro:box_inertial m="${panel_mass}" x="${chassis_length - 2.0 * panel_inset}"
+                          y="${chassis_width - 2.0 * panel_inset}" z="${panel_thickness}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:box_inertial>
+    </link>
+    <joint name="top_panel_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="top_panel_link"/>
+      <origin xyz="0 0 ${chassis_z + chassis_height / 2.0 + panel_thickness / 2.0}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Accent band (per-robot color), 2 mm proud of the chassis sides -->
+    <link name="accent_stripe_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${chassis_length + 0.004} ${chassis_width + 0.004} ${stripe_height}"/>
+        </geometry>
+        <material name="accent"/>
+      </visual>
+      <xacro:box_inertial m="${stripe_mass}" x="${chassis_length + 0.004}"
+                          y="${chassis_width + 0.004}" z="${stripe_height}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:box_inertial>
+    </link>
+    <joint name="accent_stripe_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="accent_stripe_link"/>
+      <origin xyz="0 0 ${chassis_z + chassis_height / 2.0 - stripe_drop - stripe_height / 2.0}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Camera mast (accent color): panel top -> bottom of the camera -->
+    <link name="mast_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${mast_size} ${mast_size} ${mast_length}"/></geometry>
+        <material name="accent"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${mast_size} ${mast_size} ${mast_length}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${mast_mass}" x="${mast_size}" y="${mast_size}" z="${mast_length}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:box_inertial>
+    </link>
+    <joint name="mast_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="mast_link"/>
+      <origin xyz="${zed_x} ${zed_y} ${chassis_top_z + mast_length / 2.0}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Drive wheels -->
+    <xacro:wheel side="left"  y_sign="1.0"/>
+    <xacro:wheel side="right" y_sign="-1.0"/>
+
+    <!-- Casters -->
+    <xacro:caster name="caster_front" x="${caster_x}"/>
+    <xacro:caster name="caster_rear"  x="${-caster_x}"/>
+
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<!-- ZED 2 class stereo camera built from zed.stl (long axis Y, lenses face +X).
+     Frames (un-prefixed; robot_state_publisher adds "<robot_name>/"):
+
+       default:                          wrapper_frames:=true (zed-ros2-wrapper layout)
+       zed_camera_link  (camera center)  zed_camera_link   (camera base)
+        |- zed_left_camera_frame         '- zed_camera_center
+        |   '- ..._left_camera_optical        |- zed_left_camera_frame  -> optical
+        '- zed_right_camera_frame             '- zed_right_camera_frame -> optical
+            '- ..._right_camera_optical
+
+     Optical frames follow REP-103: z forward, x right, y down.
+     If RViz shows the camera facing backwards, set zed_mesh_yaw to ${pi} in
+     amr.urdf.xacro. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Measured bounding box of zed.stl [m] -->
+  <xacro:property name="zed_bbox_min_x" value="-0.01660"/>
+  <xacro:property name="zed_bbox_max_x" value="0.01519"/>
+  <xacro:property name="zed_bbox_min_y" value="-0.08738"/>
+  <xacro:property name="zed_bbox_max_y" value="0.08738"/>
+  <xacro:property name="zed_bbox_min_z" value="-0.01496"/>
+  <xacro:property name="zed_bbox_max_z" value="0.01496"/>
+  <xacro:property name="zed_cx" value="${(zed_bbox_min_x + zed_bbox_max_x) / 2.0}"/>
+  <xacro:property name="zed_cy" value="${(zed_bbox_min_y + zed_bbox_max_y) / 2.0}"/>
+  <xacro:property name="zed_cz" value="${(zed_bbox_min_z + zed_bbox_max_z) / 2.0}"/>
+
+  <xacro:macro name="zed_camera" params="parent name:=zed wrapper_frames:=false x:=0.0 y:=0.0 z:=0.0">
+
+    <!-- wrapper layout: camera_link is at the camera base, camera_center is h/2 above it -->
+    <xacro:if value="${wrapper_frames}">
+      <xacro:property name="center_dz" value="${zed_size_z / 2.0}"/>
+      <xacro:property name="center_frame" value="${name}_camera_center"/>
+    </xacro:if>
+    <xacro:unless value="${wrapper_frames}">
+      <xacro:property name="center_dz" value="0.0"/>
+      <xacro:property name="center_frame" value="${name}_camera_link"/>
+    </xacro:unless>
+
+    <!-- Put the mesh center exactly on the camera center, after applying zed_mesh_yaw. -->
+    <xacro:property name="vis_x" value="${-(zed_cx * cos(zed_mesh_yaw) - zed_cy * sin(zed_mesh_yaw))}"/>
+    <xacro:property name="vis_y" value="${-(zed_cx * sin(zed_mesh_yaw) + zed_cy * cos(zed_mesh_yaw))}"/>
+    <xacro:property name="vis_z" value="${center_dz - zed_cz}"/>
+
+    <link name="${name}_camera_link">
+      <visual>
+        <origin xyz="${vis_x} ${vis_y} ${vis_z}" rpy="0 0 ${zed_mesh_yaw}"/>
+        <geometry>
+          <mesh filename="${mesh_prefix}zed.stl" scale="1 1 1"/>
+        </geometry>
+        <material name="zed"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${center_dz}" rpy="0 0 0"/>
+        <geometry><box size="${zed_size_x} ${zed_size_y} ${zed_size_z}"/></geometry>
+      </collision>
+      <xacro:box_inertial m="${zed_mass}" x="${zed_size_x}" y="${zed_size_y}" z="${zed_size_z}">
+        <origin xyz="0 0 ${center_dz}" rpy="0 0 0"/>
+      </xacro:box_inertial>
+    </link>
+    <joint name="${name}_camera_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}_camera_link"/>
+      <origin xyz="${x} ${y} ${z - center_dz}" rpy="0 0 0"/>
+    </joint>
+
+    <xacro:if value="${wrapper_frames}">
+      <link name="${name}_camera_center"/>
+      <joint name="${name}_camera_center_joint" type="fixed">
+        <parent link="${name}_camera_link"/>
+        <child link="${name}_camera_center"/>
+        <origin xyz="0 0 ${center_dz}" rpy="0 0 0"/>
+      </joint>
+    </xacro:if>
+
+    <!-- Left / right camera frames (x forward, y left, z up) -->
+    <link name="${name}_left_camera_frame"/>
+    <joint name="${name}_left_camera_joint" type="fixed">
+      <parent link="${center_frame}"/>
+      <child link="${name}_left_camera_frame"/>
+      <origin xyz="0 ${zed_baseline / 2.0} 0" rpy="0 0 0"/>
+    </joint>
+    <link name="${name}_right_camera_frame"/>
+    <joint name="${name}_right_camera_joint" type="fixed">
+      <parent link="${center_frame}"/>
+      <child link="${name}_right_camera_frame"/>
+      <origin xyz="0 ${-zed_baseline / 2.0} 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Optical frames (REP-103: z forward, x right, y down) -->
+    <link name="${name}_left_camera_optical_frame"/>
+    <joint name="${name}_left_camera_optical_joint" type="fixed">
+      <parent link="${name}_left_camera_frame"/>
+      <child link="${name}_left_camera_optical_frame"/>
+      <origin xyz="0 0 0" rpy="${-pi / 2.0} 0 ${-pi / 2.0}"/>
+    </joint>
+    <link name="${name}_right_camera_optical_frame"/>
+    <joint name="${name}_right_camera_optical_joint" type="fixed">
+      <parent link="${name}_right_camera_frame"/>
+      <child link="${name}_right_camera_optical_frame"/>
+      <origin xyz="0 0 0" rpy="${-pi / 2.0} 0 ${-pi / 2.0}"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>

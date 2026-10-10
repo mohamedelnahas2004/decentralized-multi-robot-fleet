@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!-- Inertia macros. m [kg], sizes [m]. Each takes an <origin> block so the
+     inertia frame can be offset / rotated relative to the link frame. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Solid box, x/y/z are the full edge lengths. -->
+  <xacro:macro name="box_inertial" params="m x y z *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m * (y * y + z * z) / 12.0}" ixy="0.0" ixz="0.0"
+               iyy="${m * (x * x + z * z) / 12.0}" iyz="0.0"
+               izz="${m * (x * x + y * y) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Solid cylinder whose axis is the inertial frame's Z axis. -->
+  <xacro:macro name="cylinder_inertial" params="m r h *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m * (3.0 * r * r + h * h) / 12.0}" ixy="0.0" ixz="0.0"
+               iyy="${m * (3.0 * r * r + h * h) / 12.0}" iyz="0.0"
+               izz="${m * r * r / 2.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- Solid sphere. -->
+  <xacro:macro name="sphere_inertial" params="m r *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia ixx="${2.0 * m * r * r / 5.0}" ixy="0.0" ixz="0.0"
+               iyy="${2.0 * m * r * r / 5.0}" iyz="0.0"
+               izz="${2.0 * m * r * r / 5.0}"/>
+    </inertial>
+  </xacro:macro>
+
+</robot>

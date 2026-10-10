@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!-- Shared palette. The *_rgba properties are the single source of truth: they
+     feed the URDF <material> tags (RViz) and the Gazebo ambient/diffuse/specular
+     blocks (see gz_material below and gazebo.xacro). -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:property name="chassis_body_rgba"  value="0.15 0.16 0.18 1.0"/>
+  <xacro:property name="chassis_panel_rgba" value="0.80 0.82 0.85 1.0"/>
+  <xacro:property name="accent_rgba"        value="$(arg accent_color)"/>
+  <xacro:property name="wheel_rgba"         value="0.05 0.05 0.05 1.0"/>
+  <xacro:property name="caster_rgba"        value="0.70 0.70 0.72 1.0"/>
+  <xacro:property name="lidar_rgba"         value="0.10 0.10 0.12 1.0"/>
+  <xacro:property name="zed_rgba"           value="0.05 0.05 0.06 1.0"/>
+
+  <material name="chassis_body"><color rgba="${chassis_body_rgba}"/></material>
+  <material name="chassis_panel"><color rgba="${chassis_panel_rgba}"/></material>
+  <material name="accent"><color rgba="${accent_rgba}"/></material>
+  <material name="wheel"><color rgba="${wheel_rgba}"/></material>
+  <material name="caster"><color rgba="${caster_rgba}"/></material>
+  <material name="lidar"><color rgba="${lidar_rgba}"/></material>
+  <material name="zed"><color rgba="${zed_rgba}"/></material>
+
+  <!-- Gazebo material for one link (applies to the link's visuals). -->
+  <xacro:macro name="gz_material" params="link rgba specular:='0.2 0.2 0.2 1.0'">
+    <gazebo reference="${link}">
+      <visual>
+        <material>
+          <ambient>${rgba}</ambient>
+          <diffuse>${rgba}</diffuse>
+          <specular>${specular}</specular>
+        </material>
+      </visual>
+    </gazebo>
+  </xacro:macro>
+
+</robot>
