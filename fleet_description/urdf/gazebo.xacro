@@ -47,7 +47,6 @@
     <xacro:gz_material link="base_link"          rgba="${chassis_body_rgba}"  specular="0.3 0.3 0.3 1.0"/>
     <xacro:gz_material link="top_panel_link"     rgba="${chassis_panel_rgba}" specular="0.4 0.4 0.4 1.0"/>
     <xacro:gz_material link="accent_stripe_link" rgba="${accent_rgba}"        specular="0.3 0.3 0.3 1.0"/>
-    <xacro:gz_material link="mast_link"          rgba="${accent_rgba}"        specular="0.3 0.3 0.3 1.0"/>
     <xacro:gz_material link="left_wheel_link"    rgba="${wheel_rgba}"         specular="0.05 0.05 0.05 1.0"/>
     <xacro:gz_material link="right_wheel_link"   rgba="${wheel_rgba}"         specular="0.05 0.05 0.05 1.0"/>
     <xacro:gz_material link="caster_front_link"  rgba="${caster_rgba}"        specular="0.8 0.8 0.8 1.0"/>
@@ -58,7 +57,6 @@
     <!-- ===== Keep colored parts as separate SDF links ===== -->
     <xacro:gz_keep_joint joint="top_panel_joint"/>
     <xacro:gz_keep_joint joint="accent_stripe_joint"/>
-    <xacro:gz_keep_joint joint="mast_joint"/>
     <xacro:gz_keep_joint joint="lidar_joint"/>
     <xacro:gz_keep_joint joint="caster_front_joint"/>
     <xacro:gz_keep_joint joint="caster_rear_joint"/>

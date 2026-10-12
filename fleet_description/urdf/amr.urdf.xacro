@@ -60,25 +60,21 @@
 
   <!-- ZED camera (center of the camera body) -->
   <xacro:property name="zed_name"                value="zed"/>
-  <xacro:property name="zed_x"                   value="0.20"/>  <!-- in base_link -->
+  <xacro:property name="zed_x"                   value="0.268"/> <!-- in base_link: chassis front (0.25) + 2 mm band + zed_size_x/2 -->
   <xacro:property name="zed_y"                   value="0.0"/>
-  <xacro:property name="zed_height_above_chassis" value="0.20"/> <!-- camera center above top panel -->
   <xacro:property name="zed_baseline"            value="0.12"/>
   <xacro:property name="zed_mass"                value="0.124"/>
   <xacro:property name="zed_size_x"              value="0.032"/> <!-- collision box -->
   <xacro:property name="zed_size_y"              value="0.175"/>
   <xacro:property name="zed_size_z"              value="0.030"/>
   <xacro:property name="zed_mesh_yaw"            value="0.0"/>   <!-- set to ${pi} if the mesh faces backwards -->
-  <xacro:property name="mast_size"               value="0.03"/>  <!-- square mast carrying the camera -->
-  <xacro:property name="mast_mass"               value="0.3"/>
 
   <!-- ====================== DERIVED VALUES ====================== -->
   <!-- base_link sits on the wheel axle; base_footprint is on the floor below it. -->
   <xacro:property name="chassis_z"     value="${ground_clearance + chassis_height / 2.0 - wheel_radius}"/>
   <xacro:property name="chassis_top_z" value="${chassis_z + chassis_height / 2.0 + panel_thickness}"/>
   <xacro:property name="lidar_z"       value="${chassis_top_z + lidar_height_above_mount + lidar_scan_height}"/>
-  <xacro:property name="zed_z"         value="${chassis_top_z + zed_height_above_chassis}"/>
-  <xacro:property name="mast_length"   value="${zed_height_above_chassis - zed_size_z / 2.0}"/>
+  <xacro:property name="zed_z"         value="${chassis_z}"/>  <!-- camera centered on the front face of the chassis -->
 
   <!-- Mesh path: absolute file:// for Gazebo, package:// for RViz/URDF-only use. -->
   <xacro:if value="$(arg use_sim)">
